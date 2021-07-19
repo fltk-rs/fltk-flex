@@ -32,6 +32,7 @@ fn main() {
 */
 
 use fltk::{
+    enums,
     group::Group,
     prelude::{GroupExt, WidgetBase, WidgetExt, WidgetType},
     widget::Widget,
@@ -72,6 +73,7 @@ pub struct Flex {
     margin: i32,
     pad: i32,
     setsized: Vec<Widget>,
+    debug: bool,
 }
 
 // Code translated from https://github.com/osen/FL_Flex
@@ -88,6 +90,7 @@ impl Flex {
             margin,
             pad,
             setsized: Vec::new(),
+            debug: false,
         }
     }
 
@@ -103,12 +106,19 @@ impl Flex {
             margin,
             pad,
             setsized: Vec::new(),
+            debug: false,
         }
     }
 
     /// Create a flex with size
     pub fn with_size(mut self, w: i32, h: i32) -> Self {
         self.grp.set_size(w, h);
+        self
+    }
+
+    /// Create a default type of flex widget
+    pub fn with_type<T: WidgetType>(mut self, typ: T) -> Self {
+        self.dir = FlexType::from_i32(typ.to_i32());
         self
     }
 
@@ -148,6 +158,38 @@ impl Flex {
         } else {
             self.resize_row(x, y, w, h);
         }
+    }
+
+    /// Debug the flex layout
+    pub fn debug(&mut self, flag: bool) {
+        self.debug = flag;
+        if flag {
+            self.grp.set_frame(enums::FrameType::BorderBox);
+            self.grp.set_color(enums::Color::Red);
+        } else {
+            self.grp.set_frame(enums::FrameType::NoBox);
+            self.grp.set_color(enums::Color::BackGround);
+        }
+    }
+
+    /// Set the margin
+    pub fn set_margin(&mut self, margin: i32) {
+        self.margin = margin;
+    }
+    
+    /// set the padding
+    pub fn set_pad(&mut self, pad: i32) {
+        self.pad = pad;
+    }
+
+    /// Get the margin
+    pub fn margin(&self) -> i32 {
+        self.margin
+    }
+
+    /// Get the padding
+    pub fn pad(&self) -> i32 {
+        self.pad
     }
 
     fn is_set_size<W: WidgetExt>(&self, wid: &W) -> bool {

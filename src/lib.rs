@@ -93,7 +93,23 @@ impl Flex {
 
     /// Create a default initialized Flex widget
     pub fn default() -> Self {
-        Self::new(0, 0, 0, 0, None)
+        let dir = FlexType::Row;
+        let margin = 0;
+        let pad = 5;
+        let grp = Group::default().size_of_parent();
+        Self {
+            grp,
+            dir,
+            margin,
+            pad,
+            setsized: Vec::new(),
+        }
+    }
+
+    /// Create a flex with size
+    pub fn with_size(mut self, w: i32, h: i32) -> Self {
+        self.grp.set_size(w, h);
+        self
     }
 
     /// Set the direction

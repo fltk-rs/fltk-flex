@@ -12,5 +12,5 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-fltk = "1.1.2"
-fltk-derive = "1.1.2"
+fltk = "1.1.10"
+fltk-derive = "1.1.10"

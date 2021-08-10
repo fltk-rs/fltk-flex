@@ -31,15 +31,9 @@ fn main() {
 ```
 */
 
-use fltk::{
-    enums,
-    group::Group,
-    prelude::{GroupExt, WidgetBase, WidgetExt, WidgetType},
-    widget::Widget,
-};
+use fltk::{enums, group::Group, prelude::{GroupExt, WidgetBase, WidgetExt, WidgetType}, widget::Widget, widget_extends};
 use std::{
     mem,
-    ops::{Deref, DerefMut},
 };
 
 /// Defines Flex types
@@ -76,6 +70,25 @@ pub struct Flex {
     debug: bool,
 }
 
+widget_extends!(Flex, Group, grp);
+
+impl Default for Flex {
+    fn default() -> Flex {
+        let dir = FlexType::Row;
+        let margin = 0;
+        let pad = 5;
+        let grp = Group::default().size_of_parent();
+        Flex {
+            grp,
+            dir,
+            margin,
+            pad,
+            setsized: Vec::new(),
+            debug: false,
+        }
+    }
+}
+
 // Code translated from https://github.com/osen/FL_Flex
 impl Flex {
     /// Create a new Flex widget
@@ -92,34 +105,6 @@ impl Flex {
             setsized: Vec::new(),
             debug: false,
         }
-    }
-
-    /// Create a default initialized Flex widget
-    pub fn default() -> Self {
-        let dir = FlexType::Row;
-        let margin = 0;
-        let pad = 5;
-        let grp = Group::default().size_of_parent();
-        Self {
-            grp,
-            dir,
-            margin,
-            pad,
-            setsized: Vec::new(),
-            debug: false,
-        }
-    }
-
-    /// Create a flex with size
-    pub fn with_size(mut self, w: i32, h: i32) -> Self {
-        self.grp.set_size(w, h);
-        self
-    }
-
-    /// Create a default type of flex widget
-    pub fn with_type<T: WidgetType>(mut self, typ: T) -> Self {
-        self.dir = FlexType::from_i32(typ.to_i32());
-        self
     }
 
     /// Set the direction
@@ -267,19 +252,5 @@ impl Flex {
 
             cy += c.h() + self.pad;
         }
-    }
-}
-
-impl Deref for Flex {
-    type Target = Group;
-
-    fn deref(&self) -> &Self::Target {
-        &self.grp
-    }
-}
-
-impl DerefMut for Flex {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.grp
     }
 }

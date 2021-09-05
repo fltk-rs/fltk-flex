@@ -117,10 +117,27 @@ impl Flex {
         T::from_i32(self.dir.to_i32())
     }
 
+    /// Set the type to be a column
+    pub fn column(mut self) -> Self {
+        self.set_type(FlexType::Column);
+        self
+    }
+
+    /// Set the type to a row
+    pub fn row(mut self) -> Self {
+        self.set_type(FlexType::Row);
+        self
+    }
+
     /// End the Flex widget
     pub fn end(&mut self) {
         self.grp.end();
         self.resize(self.grp.x(), self.grp.y(), self.grp.w(), self.grp.h());
+    }
+
+    /// Recalculate children's coords and sizes
+    pub fn recalc(&mut self) {
+        self.end();
     }
 
     /// Set the size of the widget

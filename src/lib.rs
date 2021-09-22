@@ -33,7 +33,9 @@ fn main() {
 
 use fltk::{enums, group::Group, prelude::{GroupExt, WidgetBase, WidgetExt, WidgetType}, widget::Widget, widget_extends};
 use std::{
+    cell::RefCell,
     mem,
+    rc::Rc,
 };
 
 /// Defines Flex types
@@ -63,10 +65,10 @@ pub enum FlexType {
 #[derive(Debug, Clone)]
 pub struct Flex {
     grp: Group,
-    dir: FlexType,
+    dir: Rc<RefCell<FlexType>>,
     margin: i32,
     pad: i32,
-    setsized: Vec<Widget>,
+    setsized: Rc<RefCell<Vec<Widget>>>,
     debug: bool,
 }
 
@@ -74,18 +76,38 @@ widget_extends!(Flex, Group, grp);
 
 impl Default for Flex {
     fn default() -> Flex {
-        let dir = FlexType::Row;
+        let dir = Rc::from(RefCell::from(FlexType::Row));
         let margin = 0;
         let pad = 5;
         let grp = Group::default().size_of_parent();
-        Flex {
+        let mut f = Flex {
             grp,
-            dir,
+            dir: dir.clone(),
             margin,
             pad,
-            setsized: Vec::new(),
+            setsized: Rc::from(RefCell::from(Vec::new())),
             debug: false,
-        }
+        };
+        let mut fl = f.clone();
+        f.handle({
+            let dir = dir.clone();
+            move |g, ev| match ev {
+            enums::Event::Resize => {
+                let x = g.x();
+                let y = g.y();
+                let w = g.w();
+                let h = g.h();
+                g.widget_resize(x, y, w, h);
+                if *dir.borrow() == FlexType::Column {
+                    fl.resize_col(x, y, w, h);
+                } else {
+                    fl.resize_row(x, y, w, h);
+                }
+                true
+            },
+            _ => false,
+        }});
+        f
     }
 }
 
@@ -93,28 +115,48 @@ impl Default for Flex {
 impl Flex {
     /// Create a new Flex widget
     pub fn new<T: Into<Option<&'static str>>>(x: i32, y: i32, w: i32, h: i32, label: T) -> Flex {
-        let dir = FlexType::Row;
+        let dir = Rc::from(RefCell::from(FlexType::Row));
         let margin = 0;
         let pad = 5;
         let grp = Group::new(x, y, w, h, label);
-        Self {
+        let mut f = Flex {
             grp,
-            dir,
+            dir: dir.clone(),
             margin,
             pad,
-            setsized: Vec::new(),
+            setsized: Rc::from(RefCell::from(Vec::new())),
             debug: false,
-        }
+        };
+        let mut fl = f.clone();
+        f.handle({
+            let dir = dir.clone();
+            move |g, ev| match ev {
+            enums::Event::Resize => {
+                let x = g.x();
+                let y = g.y();
+                let w = g.w();
+                let h = g.h();
+                g.widget_resize(x, y, w, h);
+                if *dir.borrow() == FlexType::Column {
+                    fl.resize_col(x, y, w, h);
+                } else {
+                    fl.resize_row(x, y, w, h);
+                }
+                true
+            },
+            _ => false,
+        }});
+        f
     }
 
     /// Set the direction
     pub fn set_type<T: WidgetType>(&mut self, typ: T) {
-        self.dir = FlexType::from_i32(typ.to_i32());
+        *self.dir.borrow_mut() = FlexType::from_i32(typ.to_i32());
     }
 
     /// Get the direction
     pub fn get_type<T: WidgetType>(&self) -> T {
-        T::from_i32(self.dir.to_i32())
+        T::from_i32(self.dir.borrow().to_i32())
     }
 
     /// Set the type to be a column
@@ -143,19 +185,19 @@ impl Flex {
     /// Set the size of the widget
     pub fn set_size<W: WidgetExt>(&mut self, wid: &mut W, size: i32) {
         wid.resize(0, 0, size, size);
-        for i in 0..self.setsized.len() {
-            if unsafe { self.setsized[i].as_widget_ptr() == wid.as_widget_ptr() } {
+        for i in 0..self.setsized.borrow().len() {
+            if unsafe { self.setsized.borrow()[i].as_widget_ptr() == wid.as_widget_ptr() } {
                 return;
             }
         }
-        self.setsized
+        self.setsized.borrow_mut()
             .push(unsafe { Widget::from_widget_ptr(wid.as_widget_ptr()) });
     }
 
     /// Resize the Flex widget
     pub fn resize(&mut self, x: i32, y: i32, w: i32, h: i32) {
         self.widget_resize(x, y, w, h);
-        if self.dir == FlexType::Column {
+        if *self.dir.borrow() == FlexType::Column {
             self.resize_col(x, y, w, h);
         } else {
             self.resize_row(x, y, w, h);
@@ -195,8 +237,8 @@ impl Flex {
     }
 
     fn is_set_size<W: WidgetExt>(&self, wid: &W) -> bool {
-        for i in 0..self.setsized.len() {
-            if unsafe { wid.as_widget_ptr() == self.setsized[i].as_widget_ptr() } {
+        for i in 0..self.setsized.borrow().len() {
+            if unsafe { wid.as_widget_ptr() == self.setsized.borrow()[i].as_widget_ptr() } {
                 return true;
             }
         }
@@ -227,7 +269,7 @@ impl Flex {
                 c.resize(
                     cx,
                     y + self.margin,
-                    (pad_w - nrs) / (cc - self.setsized.len() as i32),
+                    (pad_w - nrs) / (cc - self.setsized.borrow().len() as i32),
                     h - self.margin * 2,
                 );
             }
@@ -238,7 +280,7 @@ impl Flex {
 
     fn resize_col(&mut self, x: i32, y: i32, w: i32, h: i32) {
         let cc = self.grp.children();
-        if cc - self.setsized.len() as i32 == 0 {
+        if cc - self.setsized.borrow().len() as i32 == 0 {
             return;
         }
         let mut pad_h = h - self.margin * 2;
@@ -263,7 +305,7 @@ impl Flex {
                     x + self.margin,
                     cy,
                     w - self.margin * 2,
-                    (pad_h - nrs) / (cc - self.setsized.len() as i32),
+                    (pad_h - nrs) / (cc - self.setsized.borrow().len() as i32),
                 );
             }
 

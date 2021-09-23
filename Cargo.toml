@@ -1,6 +1,6 @@
 [package]
 name = "fltk-flex"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["MoAlyousef <mohammed.alyousef@neurosrg.com>"]
 edition = "2018"
 description = "A flexbox widget for fltk-rs"
@@ -12,5 +12,4 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-fltk = "1.1.10"
-fltk-derive = "1.1.10"
+fltk = "1.2.1"

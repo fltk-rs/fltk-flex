@@ -1,5 +1,8 @@
 # fltk-flex
 
+# Note to current and future users:
+The Flex widget has been added to the fltk crate, under the group module. This repo mostly now serves the purpose of providing examples of usage!
+
 A Rust port of [FL_Flex](https://github.com/osen/FL_Flex), which provides a flexbox widget for FLTK.
 
 ## Usage
